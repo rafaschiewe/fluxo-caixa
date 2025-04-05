@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluxo de Caixa</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Container de alertas -->
+    <div id="alertaContainer"></div>
+
+    <!-- Container de login (inicialmente oculto) -->
+    <div id="login-container" class="login-container d-none">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3><i class="fas fa-user me-2"></i>Login</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="loginUsuario" class="form-label">Usuário</label>
+                    <input type="text" class="form-control" id="loginUsuario" placeholder="Digite seu usuário">
+                </div>
+                <div class="mb-3">
+                    <label for="loginSenha" class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="loginSenha" placeholder="Digite sua senha">
+                </div>
+                <div class="d-grid">
+                    <button id="btnLogin" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Entrar
+                    </button>
+                </div>
+                <div class="mt-3 text-center">
+                    <small class="text-muted">Primeiro acesso? Crie seu usuário e senha.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container principal do aplicativo -->
+    <div id="app-container" class="container-fluid">
+        <header class="bg-primary text-white p-3 mb-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <h1><i class="fas fa-money-bill-wave me-2"></i>Fluxo de Caixa</h1>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button id="btnAlternarTema" class="btn btn-light me-2">
+                        <i id="iconeTema" class="fas fa-moon me-2"></i>
+                        <span id="textoTema">Tema Escuro</span>
+                    </button>
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-2"></i><span id="usuario-nome">Usuário</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="configuracoes.html"><i class="fas fa-cog me-2"></i>Configurações</a></li>
+                            <li><a class="dropdown-item" href="parcelamentos.html"><i class="fas fa-calendar-alt me-2"></i>Parcelamentos</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item" id="btnLogout"><i class="fas fa-sign-out-alt me-2"></i>Sair</button></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h3><i class="fas fa-plus-circle me-2"></i>Resumo</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <h4>A Receber</h4>
+                                <h3 id="totalReceber" class="text-success">R$ 0,00</h3>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h4>A Pagar</h4>
+                                <h3 id="totalPagar" class="text-danger">R$ 0,00</h3>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h4>Saldo</h4>
+                                <h3 id="saldoTotal">R$ 0,00</h3>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h4>Saldo do Dia</h4>
+                                <h3 id="saldoDia">R$ 0,00</h3>
+                                <p class="text-muted small">Atualizado em <span id="dataAtualizacaoSaldo">hoje</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h3><i class="fas fa-chart-line me-2"></i>Fluxo de Caixa</h3>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <select id="periodoGrafico" class="form-select form-select-sm d-inline-block" style="width: auto;">
+                                    <option value="mensal">Mensal</option>
+                                    <option value="semanal">Semanal</option>
+                                    <option value="diario">Diário</option>
+                                    <option value="anual">Anual</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="fluxoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h3><i class="fas fa-chart-area me-2"></i>Projeção de Saldo</h3>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <select id="mesesProjecao" class="form-select form-select-sm d-inline-block" style="width: auto;">
+                                    <option value="1">1 mês</option>
+                                    <option value="3" selected>3 meses</option>
+                                    <option value="6">6 meses</option>
+                                    <option value="12">12 meses</option>
+                                </select>
+                                <button id="btnAtualizarProjecao" class="btn btn-sm btn-light ms-2">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="projecaoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h3><i class="fas fa-chart-pie me-2"></i>Gastos por Categoria</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="categoriasChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h3><i class="fas fa-chart-line me-2"></i>Evolução do Saldo</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="evolucaoSaldoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h3><i class="fas fa-filter me-2"></i>Filtros</h3>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div class="btn-group">
+                                    <button id="btnNovaTransacao" class="btn btn-light">
+                                        <i class="fas fa-plus me-2"></i>Nova Transação
+                                    </button>
+                                    <button type="button" class="btn btn-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><button class="dropdown-item" id="btnExportarCSV"><i class="fas fa-file-export me-2"></i>Exportar CSV</button></li>
+                                        <li><button class="dropdown-item" id="btnImportarCSV"><i class="fas fa-file-import me-2"></i>Importar CSV</button></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><button class="dropdown-item text-danger" id="btnLimparTudo"><i class="fas fa-trash me-2"></i>Limpar Tudo</button></li>
+                                    </ul>
+                                </div>
+                                <input type="file" id="importarCSVInput" accept=".csv" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="filtroDataInicio" class="form-label">Data Início</label>
+                                <input type="date" class="form-control" id="filtroDataInicio">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="filtroDataFim" class="form-label">Data Fim</label>
+                                <input type="date" class="form-control" id="filtroDataFim">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="filtroIntervaloPredefinido" class="form-label">Intervalo</label>
+                                <select class="form-select" id="filtroIntervaloPredefinido">
+                                    <option value="">Personalizado</option>
+                                    <option value="hoje">Hoje</option>
+                                    <option value="ontem">Ontem</option>
+                                    <option value="esta_semana">Esta semana</option>
+                                    <option value="semana_passada">Semana passada</option>
+                                    <option value="este_mes">Este mês</option>
+                                    <option value="mes_passado">Mês passado</option>
+                                    <option value="este_ano">Este ano</option>
+                                    <option value="ano_passado">Ano passado</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="filtroTipo" class="form-label">Tipo</label>
+                                <select class="form-select" id="filtroTipo">
+                                    <option value="todos">Todos</option>
+                                    <option value="receber">A Receber</option>
+                                    <option value="pagar">A Pagar</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="filtroReferencia" class="form-label">Referência</label>
+                                <input type="text" class="form-control" id="filtroReferencia" placeholder="Ex: BRC, ALT, INS...">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="filtroCategoria" class="form-label">Categoria</label>
+                                <select class="form-select" id="filtroCategoria">
+                                    <option value="todos">Todas</option>
+                                    <option value="alimentacao">Alimentação</option>
+                                    <option value="logistica">Logística</option>
+                                    <option value="salarios">Salários</option>
+                                    <option value="impostos">Impostos</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="vendas">Vendas</option>
+                                    <option value="outros">Outros</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 text-end">
+                                <button id="btnAplicarFiltro" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Aplicar Filtro
+                                </button>
+                                <button id="btnLimparFiltro" class="btn btn-secondary ms-2">
+                                    <i class="fas fa-eraser me-2"></i>Limpar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h3><i class="fas fa-calendar-alt me-2"></i>Próximos Vencimentos</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group" id="listaProximosVencimentos">
+                            <li class="list-group-item text-center">Carregando vencimentos...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h3><i class="fas fa-arrow-down me-2"></i>A Receber</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="tabelaReceber">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Valor</th>
+                                        <th>Referência</th>
+                                        <th>Categoria</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dados serão inseridos via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h3><i class="fas fa-arrow-up me-2"></i>A Pagar</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="tabelaPagar">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Valor</th>
+                                        <th>Referência</th>
+                                        <th>Categoria</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dados serão inseridos via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="bg-light p-3 text-center mt-4 mb-4">
+            <p class="mb-0">Fluxo de Caixa &copy; 2025 - Desenvolvido para facilitar sua gestão financeira</p>
+        </footer>
+    </div>
+
+    <!-- Modal de Nova/Editar Transação -->
+    <div class="modal fade" id="modalTransacao" tabindex="-1" aria-labelledby="modalTransacaoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTransacaoLabel">Nova Transação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formTransacao">
+                        <input type="hidden" id="transacaoId">
+                        <div class="mb-3">
+                            <label for="transacaoTipo" class="form-label">Tipo</label>
+                            <select class="form-select" id="transacaoTipo" required>
+                                <option value="receber">A Receber</option>
+                                <option value="pagar">A Pagar</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transacaoData" class="form-label">Data</label>
+                            <input type="date" class="form-control" id="transacaoData" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transacaoValor" class="form-label">Valor</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="simboloMoedaTransacao">R$</span>
+                                <input type="number" class="form-control" id="transacaoValor" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transacaoReferencia" class="form-label">Referência</label>
+                            <input type="text" class="form-control" id="transacaoReferencia" placeholder="Ex: BRC, ALT, INS...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="transacaoCategoria" class="form-label">Categoria</label>
+                            <select class="form-select" id="transacaoCategoria">
+                                <option value="alimentacao">Alimentação</option>
+                                <option value="logistica">Logística</option>
+                                <option value="salarios">Salários</option>
+                                <option value="impostos">Impostos</option>
+                                <option value="marketing">Marketing</option>
+                                <option value="vendas">Vendas</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="transacaoParcelada">
+                            <label class="form-check-label" for="transacaoParcelada">Transação Parcelada</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnSalvarTransacao">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div class="modal fade" id="modalConfirmacao" tabindex="-1" aria-labelledby="modalConfirmacaoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalConfirmacaoLabel">Confirmação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="mensagemConfirmacao">Tem certeza que deseja realizar esta ação?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarAcao">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/configuracoes.js"></script>
+    <script src="js/app.js"></script>
+    <!-- Scripts simplificados para funcionalidades adicionais -->
+    <script src="js/saldo-projecao.js"></script>
+    <script src="js/visualizacao-graficos.js"></script>
+    <script src="js/parcelamentos.js"></script>
+</body>
+</html>
